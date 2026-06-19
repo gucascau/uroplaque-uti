@@ -1,28 +1,48 @@
-# Urothelium Heterogeneity in the Urinary System 
+# Essential role for the urothelial plaque in Gram-negative urinary tract infections
 
 ## Introduction
-The urinary system works as body's filteration system, which consists of two kidneys, two ureters, a bladder, urethra, and urine. The system can help the body to eliminate liquid waste and keep chemical in balance. Urothelium is a high specialized layer of strtifed epithelia cells in patterning the urinary tract. And it performed as the frontline and multi-faceted barrier against a harsh environment and lining the inner surfiace of other cells. The urothelium is mostly made up of cell types, basal, intermediate and umbresll cells in bladder, however, the accurate specificity and components in other urinary system are stil unknown. Here we collected a total of 291,852 normal human cells from urinary systems, including 184,280 kidney, 54,103 ureter, 33,495 bladder and 19,974 urine cells. After filteration, 204536 cells from 33488 bladder, 99255 kidney and 53438 from Ureter and 18355 from Urine.
-![UrotheliuminUrinaryTractReadMe](https://github.com/gucascau/Urothelium/assets/23031126/003f2c9b-3110-4d04-a656-6f47be26261c)
+Urothelial plaques are produced by bladder superficial urothelium cells and are composed of uroplakin proteins, including Upk1b. These plaques interact with UPEC type I fimbriae and are thought to contribute to bacterial attachment and invasion. To evaluate the role of the plaque in infection-associated host responses, this study used *Upk1b* knockout mice as a model of disrupted urothelial plaque function. Following UPEC inoculation, Upk1b KO mice exhibited reduced bacterial burden, impaired urothelial invasion, and absent intracellular bacterial communities, compared to wild-type hosts.
 
 ## Description
-In this project, we have collected the published avaiable single cells in human and mouse urinary system, including kidney, ureter, bladder and urine cells. 
+The code in this repository is mainly used for RNA-seq analysis of bladder samples from *Upk1b* knockout and wild-type mice following UPEC infection. The workflow includes preprocessing of RNA-seq data, pairwise comparisons between experimental groups, and global comparisons across all groups to identify transcriptional changes associated with plaque disruption and UPEC infection.
+
+These analyses were used to characterize host immune and inflammatory pathways affected by loss of *Upk1b*, providing transcriptomic support for the role of the urothelial plaque in UPEC invasion, establishment of urinary tract infection, and activation of the innate immune response.
+
 
 ## Datasets
-1. Human single cells in the urinary system. 
-	-  **Kidney**: 13 single cell datasets from healthy controls, including GSM382393, GSM3823940, GSM3823941, GSM4008619, GSM4008620, GSM4008621, GSM4008622, GSM4572192, GSM4572193, GSM4572194, GSM4572195, GSM4572196, and GSM5837792.  
-	-  **Ureter**: 4 single cells from two healthy control, including GSE184111 (1), and GSM4008665 (2)  
-	-  **Bladder**: 5 single cells from 3 patients health bladder and two adult bladder samples, including GSM3723357, GSM3723358, GSM3723359, GSM3980126, and GSM3980127.
-	-  **Urine**: 4 single cells from one health urine and 3 covid urine, including GSM5032756, GSM5706858, GSM5706859, GSM5706860
-
-2. 
+RNA was isolated from female Upk1b WT and KO bladders (4 biological replicates/group) at baseline and 24 hr following infected with UTI89 using the MirVanaTM ParisTM kit (Thermo Fisher). Bulk RNA sequencing (RNA-seq) was performed by the Genomic Services Laboratory at Nationwide Children’s Hospital.
 
 ## Methods
 
+1. RNA-seq Preprocessing .
+2. Differentially Expression Analysis
+3. Functional enrichment Analysis
+4. Transcrition factor and signaling pathway activation inference.
+
+##  Workflow
+
+The analysis is organized into three sequential steps.
+
+**Step 1 — Preprocessing** ([scripts/01_preprocessing/](scripts/01_preprocessing/))
+
+Raw paired-end FASTQ files were generated across two sequencing runs for each of the 16 samples. Files from each run were first concatenated to produce a single input per sample. Read quality was assessed with FastQC, and low-quality bases and adapter sequences were removed using Trim Galore (v0.6.0). Trimmed reads were aligned to the mouse reference genome (GRCm38/mm10) with TopHat2 (v2.1.2), guided by GENCODE vM33 gene annotations. Transcript-level abundances were estimated using Cufflinks (v2.2.1). Aligned reads were filtered to retain only uniquely mapping read pairs using SAMtools (v1.15; flags `-F 1548 -q 30`), and gene-level read counts were generated with HTSeq-count (v0.12.4) in union mode with reverse-strand specificity.
+
+**Step 2 — Pairwise Differential Expression Analysis** ([scripts/02_pairwise_comparisons/](scripts/02_pairwise_comparisions/))
+
+Read counts across all samples were merged into a single protein-coding gene expression matrix. Five pairwise contrasts were analyzed: (1) FVB infected vs. FVB baseline, (2) *Upk1b* KO infected vs. FVB baseline, (3) *Upk1b* KO infected vs. FVB infected, (4) *Upk1b* KO infected vs. *Upk1b* KO baseline, and (5) *Upk1b* KO baseline vs. FVB baseline. For each contrast, count data were normalized using the TMM method in edgeR and filtered to retain genes with CPM > 0.5 in at least 2 samples. Sample relationships were visualized by PCA and MDS plots. Differentially expressed genes (DEGs) were identified using the quasi-likelihood F-test (`glmQLFTest`) and defined by a Benjamini–Hochberg adjusted p-value ≤ 0.05 and |log2 fold change| ≥ 0.58. For each contrast, Gene Ontology (GO) biological process enrichment was performed using clusterProfiler with redundant terms collapsed by `simplify()`. Transcription factor (TF) activity was inferred from DEG t-values using the Univariate Linear Model (ULM) in decoupleR with the CollecTRI mouse regulatory network. Signaling pathway activity was estimated using the Multivariate Linear Model (MLM) with the PROGENy network.
+
+**Step 3 — Cross-group Comparison** ([scripts/03_all_groups_comparison/](scripts/03_all_groups_comparision/))
+
+DEG lists from all five pairwise contrasts were integrated and compared across experimental groups using `compareCluster()` from clusterProfiler. Innate and adaptive immune pathways were highlighted, and expression profiles of cytokines and chemokines were visualized as heatmaps. TF activity was further compared across groups to identify transcriptional regulators consistently or differentially active between *Upk1b* KO and wild-type conditions.
+
+## Citation
+
+Jackson, AR., Li, B., EIHaraken, M., Cortado, H., Gupta, S., Ballash, G., Ching, CB, Wang, X., Becknell, B. **Essential role for the urothelial plaque in Gram-negative urinary tract infections**, Scientific Reports (2026). 
 
 
 ## Copyright
 For more detail information, please feel free to contact: xin.wang@nationwidechildrens.org
 
-Copyright (c) 2023 Xin Wang
+Copyright (c) 2026 Xin Wang
 
 Current version v1.0
