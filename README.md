@@ -2,6 +2,7 @@
 
 ## Introduction
 Urothelial plaques are produced by bladder superficial urothelium cells and are composed of uroplakin proteins, including Upk1b. These plaques interact with UPEC type I fimbriae and are thought to contribute to bacterial attachment and invasion. To evaluate the role of the plaque in infection-associated host responses, this study used *Upk1b* knockout mice as a model of disrupted urothelial plaque function. Following UPEC inoculation, Upk1b KO mice exhibited reduced bacterial burden, impaired urothelial invasion, and absent intracellular bacterial communities, compared to wild-type hosts.
+<img src="figs/Fig1.png" width="1500"/>
 
 ## Description
 The code in this repository is mainly used for RNA-seq analysis of bladder samples from *Upk1b* knockout and wild-type mice following UPEC infection. The workflow includes preprocessing of RNA-seq data, pairwise comparisons between experimental groups, and global comparisons across all groups to identify transcriptional changes associated with plaque disruption and UPEC infection.
