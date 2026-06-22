@@ -15,7 +15,7 @@ RNA was isolated from female Upk1b WT and KO bladders (4 biological replicates/g
 
 ## Methods
 
-1. RNA-seq Preprocessing .
+1. RNA-seq Preprocessing - QC, mapping, and quantification.
 2. Differentially Expression Analysis
 3. Functional enrichment Analysis
 4. Transcrition factor and signaling pathway activation inference.
