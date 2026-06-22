@@ -334,11 +334,11 @@ ggsave(filename = "Upk1b_CombinedSamples_DevelopmentGenemarkersExpMatrixHeatmap.
 # ###################################################################
 
 ```{r}
-#### 设计matrix ：
+#### Design matrix ：
 design <- model.matrix(~0+group_all)
 colnames(design) <-levels(group_all)
 design
-##### 估计离散值 （Dispersion）
+##### Esitamte Dispersion
 genelist.Disp <- estimateDisp(genelist.norm, design, robust = TRUE)
 
 #plotBCV(genelist.Disp)

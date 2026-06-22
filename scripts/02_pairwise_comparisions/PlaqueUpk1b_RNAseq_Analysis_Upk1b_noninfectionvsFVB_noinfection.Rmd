@@ -353,15 +353,14 @@ ggsave(filename = "Upk1b_CombinedSamples_DevelopmentGenemarkersExpMatrixHeatmap.
 # ###################################################################
 
 ```{r}
-#### 设计matrix ：
+#### Design matrix ：
 design <- model.matrix(~0+group_all)
 colnames(design) <-levels(group_all)
 design
-##### 估计离散值 （Dispersion）
+##### Estimate Dispersion: 
 genelist.Disp <- estimateDisp(genelist.norm, design, robust = TRUE)
 
 #plotBCV(genelist.Disp)
-
 fit <- glmQLFit(genelist.Disp, design, robust=TRUE)
 ```
 
@@ -372,12 +371,10 @@ res <- glmQLFTest(fit, contrast=cntrvsKD)
 ig.edger <- res$table[p.adjust(res$table$PValue, method = "BH") < 1, ]
 
 ### add the Pajust value
-
 res$table$Padjust<-p.adjust(res$table$PValue, method = "BH") 
 
 
 ### generate an datafram
-
 results<-as.data.frame(topTags(res, n=Inf))
 
 results %>% head()
