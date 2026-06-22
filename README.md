@@ -1,7 +1,7 @@
 # Essential role for the urothelial plaque in Gram-negative urinary tract infections
 
 ## Introduction
-Urothelial plaques are produced by bladder superficial urothelium cells and are composed of uroplakin proteins, including Upk1b. These plaques interact with UPEC type I fimbriae and are thought to contribute to bacterial attachment and invasion. To evaluate the role of the plaque in infection-associated host responses, this study used *Upk1b* knockout mice as a model of disrupted urothelial plaque function. Following UPEC inoculation, Upk1b KO mice exhibited reduced bacterial burden, impaired urothelial invasion, and absent intracellular bacterial communities, compared to wild-type hosts.
+Urothelial plaques are specialized uroplakin-rich membrane structures assembled on the apical surface of superficial bladder urothelial, or umbrella, cells. These plaques interact with UPEC type I fimbriae and are thought to contribute to bacterial attachment and invasion. To evaluate the role of the plaque in infection-associated host responses, this study used *Upk1b* knockout mice as a model of disrupted urothelial plaque function. Following UPEC inoculation, Upk1b KO mice exhibited reduced bacterial burden, impaired urothelial invasion, and absent intracellular bacterial communities, compared to wild-type hosts.
 <img src="figs/Fig1.png" width="1500"/>
 
 ## Description
