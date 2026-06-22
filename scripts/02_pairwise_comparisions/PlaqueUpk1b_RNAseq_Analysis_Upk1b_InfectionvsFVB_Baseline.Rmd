@@ -33,14 +33,6 @@ knitr::opts_chunk$set(echo = TRUE,
 
 ```{r libraries, cache=FALSE, warning=FALSE, error=FALSE, message=FALSE,}
 
-# BiocManager::install("sva")
-# BiocManager::install("bladderbatch")
-
-#BiocManager::install("clusterProfiler")
-#BiocManager::install("org.Mm.eg.db")
-# BiocManager::install("DESeq2")
-#install.packages("statmod")
-#BiocManager::install("edgeR",force = TRUE)
 library(statmod)
 library(sva)
 library(bladderbatch)
@@ -55,8 +47,6 @@ library(org.Mm.eg.db)
 
 library(enrichplot)
 library(tidyverse)
-### here is to get the annotation of ensemble ID
-#BiocManager::install("biomaRt")
 library('biomaRt')
 library(factoextra)
 library(DESeq2)
@@ -64,12 +54,7 @@ library(gridExtra)
 library(edgeR)
 
 library(pheatmap)
-#omnipath_cache_wipe()
-#remotes::install_github('saezlab/omnipathr',force = TRUE)
-#remotes::install_github('saezlab/decoupleR')
-#BiocManager::install("saezlab/decoupleR")
-#library(OmnipathR)
-#omnipath_cache_wipe()
+
 library(OmnipathR)
 
 library(decoupleR)
@@ -79,6 +64,7 @@ library(tidyr)
 library(ggplot2)
 library(pheatmap)
 library(ggrepel)
+library("reshape")
 ```
 
 # ####################################################################
@@ -122,27 +108,17 @@ dir.create(CellCommDir, showWarnings = FALSE)
 ### read the data
 mydataR<-read.table(paste0(InDir,"Upk1b_Combined_ProteinCoding_Ano_uniq.txt"), header=T,row.names = 1,na.strings = F, sep = "\t")
 
-#mydataR<-read.table("../../ReadCounts/Urothelium_Combined_ProteinCoding_Annotated_uniq.txt", header=T,row.names = 1,na.strings = F, sep = "\t")
-#mydataR<-read.table("../ReadCounts/Urothelium_Combined_Annotated.txt", header=T,row.names = 1,na.strings = F, sep = "\t")
-head(mydataR)
 ```
 
 
 # ###########################
 # generate the PCA results
 # ###########################
-
-
-
 ```{r}
 
 setwd(DEGDir)
-# without removing outlier
-#Urothelium<-mydataR[,c(4:11)]
-
 # remove outlier
 Urothelium<-mydataR[,c(10:18,3:9)]
-
 
 head(Urothelium)
 ### plot all the pca
@@ -165,7 +141,7 @@ keep<-rowSums(edgeR::cpm(y)>0.5) >=2
 #table(keep)
 genelist.filted<-y[keep, ,keep.lib.sizes=FALSE]
 
-##### compsosition bias 标准化， 
+##### compsosition bias normalization -- TMM
 
 genelist.norm<-calcNormFactors(genelist.filted,method="TMM")
 genelist.norm.log<-edgeR::cpm(genelist.norm, log=TRUE)
@@ -178,21 +154,6 @@ Condition<- factor(group_all)
 # PCA analyses of samples
 # Please ignore this section (L179 - L330)
 ```{r}
-# generate the results from removing the batch effectss
-# #genelist.norm.logremoveBatch <- ComBat(genelist.norm.log, batch = group_all)
-# 
-# genelist.norm.log.pcaRemoveBatch <- prcomp(t(genelist.norm.logremoveBatch), scale = TRUE)
-# 
-# genelist.norm.log.pcaRemoveBatch$x %>% as.data.frame () %>% 
-#   ggplot(aes(x=PC1,y=PC2,color=factor(label_name))) + geom_point(size=1) + 
-#   geom_text_repel(label=colnames(genelist.norm.log),segment.size=0.01,hjust=0.2, size=2)+
-#   #labs(x= paste0("PC1: ", round(var_explained[1]*100,1),"%"),
-#   #     y=paste0("PC2: ",round(var_explained[2]*100,1),"%")) +
-#   theme_classic()
-# 
-# 
-# head(genelist.norm.log)
-
 # Run PCA using Prcommp()
 genelist.norm.log.pca <- prcomp(t(genelist.norm.log), scale = TRUE)
 
@@ -253,17 +214,6 @@ genelist.norm.log %>% head()
 
 SelectedGenesExp<-genelist.norm.log[rownames(genelist.norm.log) %in% Genemarkers, ]
 
-SelectedGenesExp
-
-
-#str_replace_all(colnames(SelectedGenesExp), rep_str)
-## update the colname 
-#colnames(SelectedGenesExp) <- str_replace_all(colnames(SelectedGenesExp), rep_str)
-
-#library("nichenetr")
-library("reshape")
-# Draw the heatmap
-
 # Draw the barplot
 SelectedGenesExpBarplot<-SelectedGenesExp %>% as.matrix() %>% melt() %>% 
   
@@ -282,7 +232,7 @@ ggsave(filename = "Upk1b_CombinedSamples_Urothelium_Biomarker_expression.pdf", p
 SelectedGenesExpMatrix <- SelectedGenesExp %>% as.matrix()
 
 
-# draw the heatmap of markergenes
+# Draw the heatmap of markergenes
 SelectedGenesExpMatrixHeatmap <-  pheatmap(SelectedGenesExpMatrix, cluster_cols = F, cluster_rows = T,show_rownames = T,scale= "row",angle_col = "45")
 SelectedGenesExpMatrixHeatmap
 ggsave(filename = "Upk1b_CombinedSamples_Urothelium_Biomarker_expressionHeatmap.pdf", plot = SelectedGenesExpMatrixHeatmap, height = 5, width = 8)
@@ -296,11 +246,6 @@ DevelopmentGenemarkers <- c("Fut4","Nanog","Oct4","Isl1","Pparg","Sox17", "Foxa2
 #  Extract the expression in the matrix
 
 DevelopmentGenemarkersExp <- genelist.norm.log[rownames(genelist.norm.log) %in% DevelopmentGenemarkers, ]
-
-DevelopmentGenemarkersExp
-#library("nichenetr")
-library("reshape")
-# Draw the heatmap
 
 # Draw the barplot
 DevelopmentGenemarkersExpBarplot<-DevelopmentGenemarkersExp %>% as.matrix() %>% melt() %>% 
@@ -322,7 +267,7 @@ rownames(DevelopmentGenemarkersExpMatrix)
 factor(rownames(DevelopmentGenemarkersExpMatrix))
 
 
-# draw the heatmap of markergenes
+# Draw the heatmap of markergenes
 DevelopmentGenemarkersExpMatrixHeatmap <-  pheatmap(DevelopmentGenemarkersExpMatrix, cluster_cols = F, cluster_rows = T,show_rownames = T,scale= "row",angle_col = "45")
 
 ggsave(filename = "Upk1b_CombinedSamples_DevelopmentGenemarkersExpMatrixHeatmap.pdf", plot = DevelopmentGenemarkersExpMatrixHeatmap, height = 5, width = 6)
@@ -334,11 +279,11 @@ ggsave(filename = "Upk1b_CombinedSamples_DevelopmentGenemarkersExpMatrixHeatmap.
 # ###################################################################
 
 ```{r}
-#### 设计matrix ：
+#### Design matrix ：
 design <- model.matrix(~0+group_all)
 colnames(design) <-levels(group_all)
 design
-##### 估计离散值 （Dispersion）
+##### Esitmiate Dispersion:
 genelist.Disp <- estimateDisp(genelist.norm, design, robust = TRUE)
 
 #plotBCV(genelist.Disp)
@@ -352,17 +297,17 @@ cntrvsKD <- makeContrasts(UPK1B_Infect-FVB_Baseline, levels=design)
 res <- glmQLFTest(fit, contrast=cntrvsKD)
 ig.edger <- res$table[p.adjust(res$table$PValue, method = "BH") < 1, ]
 
-### add the Pajust value
+### Add the Pajust value
 
 res$table$Padjust<-p.adjust(res$table$PValue, method = "BH") 
 
 
-### generate an datafram
+### Generate an datafram
 
 results<-as.data.frame(topTags(res, n=Inf))
 
 results %>% head()
-# merge the results with the orginal expression
+# Merge the results with the orginal expression
 
 result_Details <- topTags(res,n=Inf)
 result_Gene_FC<-merge(result_Details$table, Urothelium, by= 'row.names')
