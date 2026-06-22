@@ -38,7 +38,7 @@ DEGs from all contrasts were integrated and compared across groups using cluster
 
 Jackson, AR., Li, B., EIHaraken, M., Cortado, H., Gupta, S., Ballash, G., Ching, CB, Wang, X., Becknell, B. **Essential role for the urothelial plaque in Gram-negative urinary tract infections**, Scientific Reports (2026). 
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20763786.svg)] (https://doi.org/10.5281/zenodo.20763786)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20798286.svg)](https://doi.org/10.5281/zenodo.20798286)
 
 ## Copyright
 For more detail information, please feel free to contact: xin.wang@nationwidechildrens.org
