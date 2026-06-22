@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: "Wang"
     given-names: "Xin"
-    affiliation: "nationwide Children's Hospital"
+    affiliation: "Nationwide Children's Hospital"
 version: "1.0.0"
 date-released: "2026-06-19"
 license: "MIT"
