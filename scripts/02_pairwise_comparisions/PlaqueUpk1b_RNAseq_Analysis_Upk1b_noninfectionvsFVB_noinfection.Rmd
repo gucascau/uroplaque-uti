@@ -79,6 +79,12 @@ library(tidyr)
 library(ggplot2)
 library(pheatmap)
 library(ggrepel)
+
+library(ggpubr)
+library(ggplot2)
+library(purrr)
+
+
 ```
 
 # ####################################################################
@@ -305,7 +311,6 @@ ggsave(filename = "Upk1b_CombinedSamples_Urothelium_Biomarker_expressionHeatmap_
 
 write.csv(file ="BiomarkerNormalizedExp.csv", SelectedGenesExpMatrix )
 
-
 ```
 
 
@@ -339,7 +344,6 @@ ggsave(filename = "Upk1b_CombinedSamples_DevelopmentGenemarkersExpBarplot.pdf", 
 DevelopmentGenemarkersExpMatrix <- DevelopmentGenemarkersExp %>% as.matrix()
 rownames(DevelopmentGenemarkersExpMatrix)
 factor(rownames(DevelopmentGenemarkersExpMatrix))
-
 
 # draw the heatmap of markergenes
 DevelopmentGenemarkersExpMatrixHeatmap <-  pheatmap(DevelopmentGenemarkersExpMatrix, cluster_cols = F, cluster_rows = T,show_rownames = T,scale= "row",angle_col = "45")
@@ -716,12 +720,6 @@ dev.off()
 
 top_row <- plot_grid(CellCyclecnetplot, CellCycleExpMatrixHeatmap)
 
-library(ggpubr)
-library(ggplot2)
-library(purrr)
-
-
-?heatplot
 
 ```
 

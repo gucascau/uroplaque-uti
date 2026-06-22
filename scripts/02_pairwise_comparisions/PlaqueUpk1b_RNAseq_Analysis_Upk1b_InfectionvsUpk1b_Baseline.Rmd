@@ -29,18 +29,9 @@ knitr::opts_chunk$set(echo = TRUE,
                       cache = TRUE,
                       cache.lazy = FALSE)
 ```
-# 2. Similary among samples
+# 2.  Loading Libraries and Setting up the Environment
 
 ```{r libraries, cache=FALSE, warning=FALSE, error=FALSE, message=FALSE,}
-
-# BiocManager::install("sva")
-# BiocManager::install("bladderbatch")
-
-#BiocManager::install("clusterProfiler")
-#BiocManager::install("org.Mm.eg.db")
-# BiocManager::install("DESeq2")
-#install.packages("statmod")
-#BiocManager::install("edgeR",force = TRUE)
 library(statmod)
 library(sva)
 #library(bladderbatch)
@@ -131,8 +122,6 @@ head(mydataR)
 # ###########################
 # generate the PCA results
 # ###########################
-
-
 
 ```{r}
 
