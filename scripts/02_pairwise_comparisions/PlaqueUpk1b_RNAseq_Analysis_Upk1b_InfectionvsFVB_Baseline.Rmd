@@ -43,8 +43,6 @@ library(ggrepel)
 library(edgeR)
 library(clusterProfiler)
 library(org.Mm.eg.db)
-#keytypes(org.Mm.eg.db) 
-
 library(enrichplot)
 library(tidyverse)
 library('biomaRt')
@@ -52,11 +50,8 @@ library(factoextra)
 library(DESeq2)
 library(gridExtra)
 library(edgeR)
-
 library(pheatmap)
-
 library(OmnipathR)
-
 library(decoupleR)
 library(dplyr)
 library(tibble)

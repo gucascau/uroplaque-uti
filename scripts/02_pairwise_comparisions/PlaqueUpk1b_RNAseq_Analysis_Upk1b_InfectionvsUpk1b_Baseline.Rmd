@@ -30,11 +30,9 @@ knitr::opts_chunk$set(echo = TRUE,
                       cache.lazy = FALSE)
 ```
 # 2.  Loading Libraries and Setting up the Environment
-
 ```{r libraries, cache=FALSE, warning=FALSE, error=FALSE, message=FALSE,}
 library(statmod)
 library(sva)
-#library(bladderbatch)
 library(ggfortify)
 library(ggplot2)
 library(ggnewscale)
@@ -42,12 +40,8 @@ library(ggrepel)
 library(edgeR)
 library(clusterProfiler)
 library(org.Mm.eg.db)
-#keytypes(org.Mm.eg.db) 
-
 library(enrichplot)
 library(tidyverse)
-### here is to get the annotation of ensemble ID
-#BiocManager::install("biomaRt")
 library('biomaRt')
 library(factoextra)
 library(DESeq2)
@@ -55,12 +49,6 @@ library(gridExtra)
 library(edgeR)
 
 library(pheatmap)
-#omnipath_cache_wipe()
-#remotes::install_github('saezlab/omnipathr',force = TRUE)
-#remotes::install_github('saezlab/decoupleR')
-#BiocManager::install("saezlab/decoupleR")
-#library(OmnipathR)
-#omnipath_cache_wipe()
 library(OmnipathR)
 
 library(decoupleR)
