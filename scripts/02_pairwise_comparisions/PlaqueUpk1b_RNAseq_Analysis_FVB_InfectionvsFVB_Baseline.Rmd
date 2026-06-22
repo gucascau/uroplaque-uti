@@ -33,17 +33,8 @@ knitr::opts_chunk$set(echo = TRUE,
 
 ```{r libraries, cache=FALSE, warning=FALSE, error=FALSE, message=FALSE,}
 
-# BiocManager::install("sva")
-# BiocManager::install("bladderbatch")
-
-#BiocManager::install("clusterProfiler")
-#BiocManager::install("org.Mm.eg.db")
-# BiocManager::install("DESeq2")
-#install.packages("statmod")
-#BiocManager::install("edgeR",force = TRUE)
 library(statmod)
 library(sva)
-#library(bladderbatch)
 library(ggfortify)
 library(ggplot2)
 library(ggnewscale)
@@ -51,12 +42,9 @@ library(ggrepel)
 library(edgeR)
 library(clusterProfiler)
 library(org.Mm.eg.db)
-#keytypes(org.Mm.eg.db) 
 
 library(enrichplot)
 library(tidyverse)
-### here is to get the annotation of ensemble ID
-#BiocManager::install("biomaRt")
 library('biomaRt')
 library(factoextra)
 library(DESeq2)
@@ -64,12 +52,6 @@ library(gridExtra)
 library(edgeR)
 
 library(pheatmap)
-#omnipath_cache_wipe()
-#remotes::install_github('saezlab/omnipathr',force = TRUE)
-#remotes::install_github('saezlab/decoupleR')
-#BiocManager::install("saezlab/decoupleR")
-#library(OmnipathR)
-#omnipath_cache_wipe()
 library(OmnipathR)
 
 library(decoupleR)
@@ -79,6 +61,7 @@ library(tidyr)
 library(ggplot2)
 library(pheatmap)
 library(ggrepel)
+library("reshape")
 ```
 
 # ####################################################################
@@ -165,21 +148,6 @@ genelist.norm<-calcNormFactors(genelist.filted,method="TMM")
 genelist.norm.log<-edgeR::cpm(genelist.norm, log=TRUE)
 genelist.norm.log<-as.data.frame(genelist.norm.log)
 
-# generate the results from removing the batch effectss
-# #genelist.norm.logremoveBatch <- ComBat(genelist.norm.log, batch = group_all)
-# 
-# genelist.norm.log.pcaRemoveBatch <- prcomp(t(genelist.norm.logremoveBatch), scale = TRUE)
-# 
-# genelist.norm.log.pcaRemoveBatch$x %>% as.data.frame () %>% 
-#   ggplot(aes(x=PC1,y=PC2,color=factor(label_name))) + geom_point(size=1) + 
-#   geom_text_repel(label=colnames(genelist.norm.log),segment.size=0.01,hjust=0.2, size=2)+
-#   #labs(x= paste0("PC1: ", round(var_explained[1]*100,1),"%"),
-#   #     y=paste0("PC2: ",round(var_explained[2]*100,1),"%")) +
-#   theme_classic()
-# 
-# 
-# head(genelist.norm.log)
-
 # Run PCA using Prcommp()
 genelist.norm.log.pca <- prcomp(t(genelist.norm.log), scale = TRUE)
 
@@ -244,15 +212,12 @@ genelist.norm.log %>% head()
 
 SelectedGenesExp<-genelist.norm.log[rownames(genelist.norm.log) %in% CellTypeMarkers, c(1:4,9:12) ]
 
-SelectedGenesExp
-
-
 #str_replace_all(colnames(SelectedGenesExp), rep_str)
 ## update the colname 
 #colnames(SelectedGenesExp) <- str_replace_all(colnames(SelectedGenesExp), rep_str)
 
 #library("nichenetr")
-library("reshape")
+
 # Draw the heatmap
 
 # Draw the barplot
@@ -272,7 +237,6 @@ ggsave(filename = "Upk1b_CombinedSamples_Urothelium_Biomarker_expression_Noninfe
 
 SelectedGenesExpMatrix <- genelist.norm.log[CellTypeMarkers,c(1:4,9:12) ]
 
-
 # draw the heatmap of markergenes
 SelectedGenesExpMatrixHeatmap <-  pheatmap(SelectedGenesExpMatrix, cluster_cols = F, cluster_rows = F,show_rownames = T,scale= "row",angle_col = "45")
 SelectedGenesExpMatrixHeatmap
@@ -291,9 +255,6 @@ DevelopmentGenemarkers <- c("Fut4","Nanog","Oct4","Isl1","Pparg","Sox17", "Foxa2
 DevelopmentGenemarkersExp <- genelist.norm.log[rownames(genelist.norm.log) %in% DevelopmentGenemarkers, ]
 
 DevelopmentGenemarkersExp
-#library("nichenetr")
-library("reshape")
-# Draw the heatmap
 
 # Draw the barplot
 DevelopmentGenemarkersExpBarplot<-DevelopmentGenemarkersExp %>% as.matrix() %>% melt() %>% 
@@ -327,11 +288,11 @@ ggsave(filename = "Upk1b_CombinedSamples_DevelopmentGenemarkersExpMatrixHeatmap.
 # ###################################################################
 
 ```{r}
-#### 设计matrix ：
+#### design the matrix：
 design <- model.matrix(~0+group_all)
 colnames(design) <-levels(group_all)
 design
-##### 估计离散值 （Dispersion）
+##### calculate the Dispersio: 
 genelist.Disp <- estimateDisp(genelist.norm, design, robust = TRUE)
 
 #plotBCV(genelist.Disp)
@@ -348,7 +309,6 @@ ig.edger <- res$table[p.adjust(res$table$PValue, method = "BH") < 1, ]
 ### add the Pajust value
 
 res$table$Padjust<-p.adjust(res$table$PValue, method = "BH") 
-
 
 ### generate an datafram
 
@@ -390,10 +350,6 @@ write.csv(results, file="Upk1b_UrotheliumExpression.AllGenes.csv")
 BUDEG_Padjust<- res$table[res$table$Padjust <=0.05 & res$table$logFC >=0.58,]
 # down-regulated genes
 BDDEG_Padjust<- res$table[res$table$Padjust <=0.05 & res$table$logFC <= -0.58,]
-
-### if we use the pvalue instead of p adjust value, we did not use P value
-# BUDEG<- res$table[res$table$PValue <= 0.05 &  res$table$logFC >=0.58, ]
-# BDDEG<- res$table[res$table$PValue <= 0.05  &  res$table$logFC <=-0.58, ]
 
 nrow(BUDEG_Padjust)
 nrow(BDDEG_Padjust)
@@ -464,8 +420,6 @@ rownames(DEGExpMatrix) <- result_Gene_FC_normalizedlog[result_Gene_FC_normalized
 
 DEGExpMatrixHeatmap <- DEGExpMatrix %>% as.matrix() %>% pheatmap(cluster_cols = F,show_rownames = F,scale= "row",angle_col = "45")
 ggsave(filename = "Upk1b_FVB_InfectvsFVB_Baseline_DEGExpMatrixHeatmap.pdf", plot = DEGExpMatrixHeatmap, height = 5, width = 6)
-
-?grid.arrange
 ```
 
 
@@ -749,545 +703,5 @@ ggsave(filename = paste0(tf ,"_targets_peahtamap.pdf"), plot = Pheatmap_Targets,
 
 
 
-
-
-
-
-
-
-# ######################################## 
-# we have not performed the analyses below
-# ######################################## 
-
-# generate heatmap for interesting pathways 
-```{r}
-
-# select the pathway and check the genes involved in the pathways
-
-# 1. Urothelium have great effects on the regulation of embryonic development or other cell profliferation in neonates
-
-RegulationPathways<- c("regulation of epithelial cell proliferation","regulation of embryonic development","regulation of neurogenesis","regulation of fibroblast proliferation","regulation of stem cell proliferation","regulation of smooth muscle cell proliferation","regulation of myeloid cell differentiation","epidermal cell differentiation","keratinocyte differentiation")
- ## use new way of specifying visualization options
-color.params = list(foldChange = FCgenelist, edge = TRUE)
-cex.params = list(category_label = 0.6, gene_label = 0.4)
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_RegulationPathways_cntplot.pdf", width = 8, height = 5)
-
-Regulationcnetplot<- cnetplot(BDEGsGO, showCategory=RegulationPathways, categorySize="pvalue", color.params =  color.params,cex.params = cex.params)
-Regulationcnetplot
-dev.off()
-
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_RegulationPathways_heatplot.pdf", width = 15, height = 5)
-Regulationheatplot<- heatplot(BDEGsGO, foldChange=FCgenelist, showCategory=RegulationPathways)
-Regulationheatplot
-dev.off()
-
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_RegulationPathways_combined.pdf", width = 25, height = 6)
-
-cowplot::plot_grid(Regulationcnetplot, Regulationheatplot, ncol=2, labels=LETTERS[1:2], rel_widths = c(1,2))
-
-dev.off()
-
-# generate the heatmaps
-
-RegulationDEGs<- BDEGsGO %>% as.data.frame() %>% filter(Description %in% RegulationPathways) %>% pull(geneID) %>% strsplit("/") %>% unlist() %>% unique()
-
-# draw the heatmap
-
-RegulationDEGExpMatrix <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% RegulationDEGs, c(8:14)]
-rownames(RegulationDEGExpMatrix) <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% RegulationDEGs, 1]
-colnames(RegulationDEGExpMatrix) <- str_replace_all(colnames(RegulationDEGExpMatrix), rep_str)
-
-?pheatmap
-RegulationExpMatrixHeatmap <- RegulationDEGExpMatrix %>% as.matrix() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = "Upk1b_FVB_InfectvsFVB_Baseline_RegulationExpMatrixHeatmap.pdf", plot = DevelopmentExpMatrixHeatmap, height = 12, width = 8)
-
-```
-
-# generate heatmap for the urothelium cell in newborn have the ability to cell cycle phase 
-```{r}
-
-# select the pathway and check the genes involved in the pathways
-
-# 1. Urothelium have great effects on the regulation of embryonic development or other cell profliferation in neonates
-
-CellCyclePathways<- c("positive regulation of cell cycle","mitotic cell cycle phase transition","regulation of cell cycle phase transition","nuclear chromosome segregation","sister chromatid segregation","nuclear division","metaphase/anaphase transition of mitotic cell cycle","mitotic spindle organization","regulation of chromosome segregation","cell cycle G1/S phase transition","cell cycle G2/M phase transition")
- ## use new way of specifying visualization options
-color.params = list(foldChange = FCgenelist, edge = TRUE)
-cex.params = list(category_label = 0.6, gene_label = 0.4)
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_CellCyclePathways_cntplot.pdf", width = 11, height = 8)
-
-CellCyclecnetplot<- cnetplot(BDEGsGO, showCategory=CellCyclePathways, categorySize="pvalue", color.params =  color.params,cex.params = cex.params ,circular=TRUE)
-CellCyclecnetplot
-dev.off()
-
-?cnetplot
-
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_CellCyclePathways_heatplot.pdf", width = 15, height = 5)
-CellCycleheatplot<- heatplot(BDEGsGO, foldChange=FCgenelist, showCategory=CellCyclePathways)
-CellCycleheatplot
-dev.off()
-
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_CellCyclePathways_combined.pdf", width = 25, height = 6)
-
-cowplot::plot_grid(CellCyclecnetplot, CellCycleheatplot, ncol=2, labels=LETTERS[1:2], rel_widths = c(1,2))
-
-dev.off()
-
-# generate the heatmaps
-
-CellCycleDEGs<- BDEGsGO %>% as.data.frame() %>% filter(Description %in% CellCyclePathways) %>% pull(geneID) %>% strsplit("/") %>% unlist() %>% unique()
-
-# draw the heatmap
-
-CellCyclDEGExpMatrix <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% CellCycleDEGs, c(8:14)]
-rownames(CellCyclDEGExpMatrix) <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% CellCycleDEGs, 1]
-colnames(CellCyclDEGExpMatrix) <- str_replace_all(colnames(CellCyclDEGExpMatrix), rep_str)
-
-?pheatmap
-CellCycleExpMatrixHeatmap <- CellCyclDEGExpMatrix %>% as.matrix() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = "Upk1b_FVB_InfectvsFVB_Baseline_CellCycleExpMatrixHeatmap.pdf", plot = CellCycleExpMatrixHeatmap, height = 9, width = 7)
-
-
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_CellCyclePathways_combined.pdf", width = 25, height = 6)
-
-cowplot::plot_grid(CellCyclecnetplot, CellCycleheatplot, ncol=2, labels=LETTERS[1:2], rel_widths = c(1,2))
-dev.off()
-
-top_row <- plot_grid(CellCyclecnetplot, CellCycleExpMatrixHeatmap)
-
-library(ggpubr)
-library(ggplot2)
-library(purrr)
-
-
-?heatplot
-
-```
-
-# generate heatmap for the urothelium cell in newborn have the ability to cell cycle phase 
-```{r}
-
-# select the pathway and check the genes involved in the pathways
-
-# 1. Urothelium have great effects on the regulation of embryonic development or other cell profliferation in neonates
-
-DevelopmentPathways<- c("mesenchyme development","placenta development","epidermis development","skeletal muscle tissue development","ureteric bud development","blastocyst development","blastocyst development","smooth muscle tissue development")
- ## use new way of specifying visualization options
-color.params = list(foldChange = FCgenelist, edge = TRUE)
-cex.params = list(category_label = 0.6, gene_label = 0.4)
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_DevelopmentPathways_cntplot.pdf", width = 10, height = 8)
-
-Developmentcnetplot<- cnetplot(BDEGsGO, showCategory=DevelopmentPathways, categorySize="pvalue", color.params =  color.params,cex.params = cex.params)
-Developmentcnetplot
-dev.off()
-
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_DevelopmentPathways_heatplot.pdf", width = 12, height = 4)
-Developmentheatplot<- heatplot(BDEGsGO, foldChange=FCgenelist, showCategory=DevelopmentPathways)
-Developmentheatplot
-dev.off()
-
-pdf("Upk1b_FVB_InfectvsFVB_Baseline_DevelopmentPathways_combined.pdf", width = 25, height = 6)
-
-cowplot::plot_grid(Developmentcnetplot, Developmentheatplot, ncol=2, labels=LETTERS[1:2], rel_widths = c(1,2))
-
-dev.off()
-
-# generate the heatmaps
-
-DevelopmentDEGs<- BDEGsGO %>% as.data.frame() %>% filter(Description %in% DevelopmentPathways) %>% pull(geneID) %>% strsplit("/") %>% unlist() %>% unique()
-
-# draw the heatmap
-
-DevelopmentDEGExpMatrix <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% DevelopmentDEGs, c(8:14)]
-rownames(DevelopmentDEGExpMatrix) <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% DevelopmentDEGs, 1]
-colnames(DevelopmentDEGExpMatrix) <- str_replace_all(colnames(DevelopmentDEGExpMatrix), rep_str)
-
-?pheatmap
-DevelopmentExpMatrixHeatmap <- DevelopmentDEGExpMatrix %>% as.matrix() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = "Upk1b_FVB_InfectvsFVB_Baseline_DevelopmentExpMatrixHeatmap.pdf", plot = DevelopmentExpMatrixHeatmap, height = 12, width = 8)
-
-```
-
-# # #################################################################################
-# Section 4: Detetion of transcript factors and their activities using the decoupleR
-# ################################################################################
-
-# CollecTRI is a comprehensive resource containing a curated collection of TFs and their transcriptional targets compiled from 12 different resources. This collection provides an increased coverage of transcription factors and a superior performance in identifying perturbed TFs compared to our previous DoRothEA network and other literature based GRNs. Similar to DoRothEA, interactions are weighted by their mode of regulation (activation or inhibition).
-
-# Activity inference with Univariate Linear Model (ULM)
-```{r}
-# get all the normalized read counts for kidney
-
-# set the TF directory
-setwd(TFDir)
-#setwd("/Users/XXW004/Documents/Projects/BrianBecknell/lcRNAseq/Results/RNAseq/TranscripFactors/")
-
-# details of Urothelium expression
-result_Gene_FC_normalizedlog %>% head()
-UrotheliumGeneExpression<-result_Gene_FC_normalizedlog[,c(8:14)]
-rownames(UrotheliumGeneExpression) <- result_Gene_FC_normalizedlog[,1]
-
-# change the colnames
-
-colnames(UrotheliumGeneExpression) <- str_replace_all(colnames(UrotheliumGeneExpression),rep_str)
-
-UrotheliumGeneExpression %>% head()
-# get the design 
-
-UrotheliumDesign <- tibble(sample=str_replace_all(colnames(UrotheliumGeneExpression),rep_str), condition=c(rep("Adult",3),rep("Neonate",4)))
-UrotheliumDesign
-# get the t value of the DEGs between two conditions
-res$table[res$table$Padjust <=0.05 & res$table$logFC <= -0.58,]
-
-# extract t-value per gene
-deg <- result_Gene_FC_normalizedlog %>% mutate(t = -log10(PValue) * logFC) %>% filter(Padjust <=0.05 & (logFC >=0.58 |logFC <=-0.58)) %>% dplyr::select(Row.names,logFC, t, PValue) %>% 
-    filter(!is.na(t)) %>% 
-    column_to_rownames(var = "Row.names") %>%
-    as.matrix()
-# check the DEG and t-value per genes
-deg%>% head()
-```
-
-
-```{r}
-# here we collecte a comprehensive resource containing a curated collection of TFs and their transcript targets comping from 12 different resources . This collection proivides an increased coverage of transcript factors and a superior performance 
-# in identitying pertubed TFs compared and other literature based GRNs.  TFs > 1,100 from 
-omnipath_cache_wipe()
-omnipath_set_console_loglevel('trace') # important otherwide it would give the results of human
-net <-  decoupleR::get_collectri(organism="mouse", split_complexes=FALSE)
-net %>% head()
-net %>% filter(source %in% c("Tp53"))
-```
-
-
-# we ignore this due to we are not focusing on the whole gene expression but interested into the differentially expression
-```{r}
-# Activity inference wiht univariate linear model: To infer TF enrichment scores we run the univaribate linera model methods, for each sample in our datasets and each TF in our network, it fits a linear model that preducts the observed gene expression based solely on the TF's TF-gene interaction weights. 
-# Once fitted the obtained t-value of the slope ist he score, If it is positive, we interpret that the TF is active and if it is negative we interpret that it is inactive.
-sample_acts <- run_ulm(mat=UrotheliumGeneExpression, net=net, .source='source', .target='target',
-                  .mor='mor', minsize = 5)
-
-#From the obtained results we will observe the most variable activities across samples in a heat-map:
-#n_tfs <-40
-# vsualization
-# From the obtained results we will observe the most variable activities across samples in a heat-map:
-
-sample_acts_mat <- sample_acts %>%
-  pivot_wider(id_cols = 'condition', names_from = 'source',
-              values_from = 'score') %>%
-  column_to_rownames('condition') %>%
-  as.matrix()
-sample_acts_mat %>% head()
-# Scale per feature
-# Get all the tfs with more variable means across clusters
-tfs <- sample_acts %>%
-  group_by(source) %>%
-  summarise(std = sd(score)) %>%
-  arrange(-abs(std)) %>%
-  #head(n_tfs) %>%
-  pull(source)
-
-tfs %>% length()
-# overlapping with DEGs
-DEGs<- res$table[res$table$Padjust <=0.05 & (res$table$logFC <= -0.58|res$table$logFC >= 0.58),] %>% rownames()
-DEGs %>% length()
-
-tfs_DEG_verlapping<-intersect(tfs, DEGs)
-tfs_DEG_verlapping
-# Generate the expression profiles of these overlapping genes
-tfs_DEG_verlappingHeatmap<- UrotheliumGeneExpression[tfs_DEG_verlapping,] %>% pheatmap(scale = "row",border_color = NA, color=my_color,angle_col = "45") 
-# top transcript that show dramatical different
-ggsave("tfs_DEG_verlappingHeatmap_Exp.pdf", plot =tfs_DEG_verlappingHeatmap, height = 10, width = 6 )
-
-
-sample_acts_mat <- sample_acts_mat[,tfs_DEG_verlapping]
-sample_acts_mat %>% t() %>% head()
-# Scale per sample
-#sample_acts_mat <- scale(sample_acts_mat)
-
-# Choose color palette
-palette_length = 100
-my_color = colorRampPalette(c("Darkblue", "white","red"))(palette_length)
-
-my_breaks <- c(seq(-3, 0, length.out=ceiling(palette_length/2) + 1),
-               seq(0.05, 3, length.out=floor(palette_length/2)))
-
-# Plot
-TopTFpheatmap<-pheatmap(t(sample_acts_mat), scale = "row",border_color = NA, color=my_color, breaks = my_breaks) 
-t(sample_acts_mat) %>% head()
-ggsave("TopTFpheatmap_FromAllExp.pdf", plot =TopTFpheatmap, height = 10, width = 6 )
-
-```
-
-# we profiled the expression of target gene list
-```{r}
-net %>%
-  filter(source == tf)
-for (tf in tfs_DEG_verlapping){
-  
-  tf= c("Jun")
-  net %>% head()
-  df<- c()
-  df <- net %>%
-  filter(source == tf) %>%
-  arrange(target) %>%
-  mutate(ID = target, color = "3") %>%
-  column_to_rownames('target')
-
-inter <- sort(intersect(rownames(deg),rownames(df)))
-inter
-#heightlength <- round(6*length(inter))
-
-df[inter,c('logfc', 't_value', 'Padjust')] <- deg[inter, ]
-df <- df %>%
-  mutate(color = if_else(mor > 0 & t_value > 0, '1', color)) %>%
-  mutate(color = if_else(mor > 0 & t_value < 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value > 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value < 0, '1', color))
-
-VolcanoPlot <- ggplot(df, aes(x = logfc, y = -log10(Padjust), color = color, size=abs(mor))) +
-  geom_point() +
-  scale_colour_manual(values = c("red","royalblue3","grey")) +
-  geom_label_repel(aes(label = ID, size=1)) + 
-  theme_minimal() +
-  theme(legend.position = "none") +
-  geom_vline(xintercept = 0, linetype = 'dotted') +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  ggtitle(tf)
-#VolcanoPlot
-ggsave(filename = paste0(tf ,"_targets_VolcanoPlot.pdf"), plot = VolcanoPlot, width = 6, height = 6)
-# add a heatmap for the Rela infected genes (Regulated by Transcritptomics)
-inter <- sort(intersect(rownames(deg),rownames(df)))
-Pheatmap_Targets<- UrotheliumGeneExpression[inter,] %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = paste0(tf ,"_targets_peahtamap.pdf"), plot = Pheatmap_Targets, width = 6, height = 6)
-
-
-}
-
-```
-
-
-# we infer pathway activatity from the the t-value of the DEGs between KO and WT
-```{r}
-# Run ulm
-n_tfs <-40
-
-# Run Univariate linear model (ULM) for the differentially expressed genes
-contrast_acts <- run_ulm(mat=deg[, 't', drop=FALSE], net=net, .source='source', .target='target',
-                  .mor='mor', minsize = 5)
-
-contrast_acts
-# Filter top TFs in both signs
-## add a NA for a new column rnk
-f_contrast_acts <- contrast_acts %>%
-  mutate(rnk = NA)
-msk <- f_contrast_acts$score >0
-
-# we only consider those that have scores larger than 0
-
-f_contrast_acts[msk, 'rnk'] <- rank(-f_contrast_acts[msk, 'score'])
-f_contrast_acts[!msk, 'rnk'] <- rank(-abs(f_contrast_acts[!msk, 'score']))
-
-tfs <- f_contrast_acts %>%
-  arrange(rnk) %>%
-  head(n_tfs) %>%
-  pull(source)
-
-tfs
-f_contrast_acts <- f_contrast_acts %>%
-  filter(source %in% tfs)
-
-# generate the top transcript factor for the DEGs
-
-# Plot
-DEGTopTrasncriptFactor<- ggplot(f_contrast_acts, aes(x = reorder(source, score), y = score)) + 
-    geom_bar(aes(fill = score), stat = "identity") +
-    scale_fill_gradient2(low = "darkblue", high = "indianred", 
-        mid = "whitesmoke", midpoint = 0) + 
-    theme_minimal() +
-    theme(axis.title = element_text(face = "bold", size = 12),
-        axis.text.x = 
-            element_text(angle = 45, hjust = 1, size =10, face= "bold"),
-        axis.text.y = element_text(size =10, face= "bold"),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-    xlab("Pathways")
-
-ggsave("UrotheliumNeonateDEGTopTrasncriptFactor.pdf",plot = DEGTopTrasncriptFactor, height = 4, width = 8)
-
-
-
-```
-
-```{r}
-tfs
-UrotheliumGeneExpression["Trp53",]
-# generate the pheatmap for the top 30 TF
-Pheatmap_TF <- UrotheliumGeneExpression[tfs,] %>% na.omit() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = "Kidney_TF_peahtamap.pdf", plot = Pheatmap_TF, width = 6, height = 6)
-
-
-```
-
-# show one specific activated pathway
-```{r}
-tf <- 'Rela'
-
-# generate the pheatmap for the targets for each TF
-
-for (tf in tfs){
-  
-  net %>% head()
-  df<- c()
-  df <- net %>%
-  filter(source == tf) %>%
-  arrange(target) %>%
-  mutate(ID = target, color = "3") %>%
-  column_to_rownames('target')
-
-inter <- sort(intersect(rownames(deg),rownames(df)))
-
-#heightlength <- round(6*length(inter))
-
-df[inter,c('logfc', 't_value', 'Padjust')] <- deg[inter, ]
-df <- df %>%
-  mutate(color = if_else(mor > 0 & t_value > 0, '1', color)) %>%
-  mutate(color = if_else(mor > 0 & t_value < 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value > 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value < 0, '1', color))
-
-VolcanoPlot <- ggplot(df, aes(x = logfc, y = -log10(Padjust), color = color, size=abs(mor))) +
-  geom_point() +
-  scale_colour_manual(values = c("red","royalblue3","grey")) +
-  geom_label_repel(aes(label = ID, size=1)) + 
-  theme_minimal() +
-  theme(legend.position = "none") +
-  geom_vline(xintercept = 0, linetype = 'dotted') +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  ggtitle(tf)
-
-ggsave(filename = paste0(tf ,"_targets_VolcanoPlot.pdf"), plot = VolcanoPlot, width = 6, height = 6)
-# add a heatmap for the Rela infected genes (Regulated by Transcritptomics)
-inter <- sort(intersect(rownames(deg),rownames(df)))
-Pheatmap_Targets<- UrotheliumGeneExpression[inter,] %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = paste0(tf ,"_targets_peahtamap.pdf"), plot = Pheatmap_Targets, width = 6, height = 6)
-
-
-}
-
-# generate the pheatmap for the top 30 TF
-Pheatmap_TF <- UrotheliumGeneExpression[tfs,] %>% na.omit() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = "UrotheliumGeneExpression_TF_peahtamap.pdf", plot = Pheatmap_TF, width = 6, height = 6)
-
-```
-
-
-# For visuziation of the major signaling pathway
-```{r}
-
-# setting the progeny signaling pathway
-setwd(ProgenyDir)
-
-netProgeny <- get_progeny(organism = 'mouse', top = 500)
-netProgeny
-
-```
-# Activity inference with Multivariate Linear Model (MLM)
-
-```{r}
-# Run mlm
-deg
-contrast_acts_Pregeny <- run_mlm(mat=deg, net=netProgeny, .source='source', .target='target',
-                  .mor='weight', minsize = 5)
-print(contrast_acts_Pregeny)
-# Plot
-ggplot(contrast_acts_Pregeny, aes(x = reorder(source, score), y = score)) + 
-    geom_bar(aes(fill = score), stat = "identity") +
-    scale_fill_gradient2(low = "darkblue", high = "indianred", 
-        mid = "whitesmoke", midpoint = 0) + 
-    theme_minimal() +
-    theme(axis.title = element_text(face = "bold", size = 12),
-        axis.text.x = 
-            element_text(angle = 45, hjust = 1, size =10, face= "bold"),
-        axis.text.y = element_text(size =10, face= "bold"),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-    xlab("Pathways")
-```
-# visulaization From the obtained results we will observe the obtained activities per sample in a heat-map:
-```{r}
-# Run mlm
-UrotheliumGeneExpression
-sample_acts <- run_mlm(mat=UrotheliumGeneExpression, net=netProgeny, .source='source', .target='target',
-                  .mor='weight', minsize = 5)
-sample_acts
-# Transform to wide matrix
-sample_acts_mat <- sample_acts %>%
-  pivot_wider(id_cols = 'condition', names_from = 'source',
-              values_from = 'score') %>%
-  column_to_rownames('condition') %>%
-  as.matrix()
-#sample_acts_mat
-# Scale per feature
-sample_acts_mat <- scale(sample_acts_mat)
-
-# Choose color palette
-palette_length = 100
-my_color = colorRampPalette(c("Darkblue", "white","red"))(palette_length)
-
-my_breaks <- c(seq(-3, 0, length.out=ceiling(palette_length/2) + 1),
-               seq(0.05, 3, length.out=floor(palette_length/2)))
-
-# Plot
-pheatmap(sample_acts_mat, border_color = NA, color=my_color, breaks = my_breaks) 
-```
-
-
-# get all the heatmap figures for the important signaling
-```{r}
-
-# generate the pathway and targets
-pathways <- contrast_acts_Pregeny %>% pull(source) %>% unique()
-for (tf in pathways){
-
-
-df <- netProgeny %>%
-  filter(source == tf) %>%
-  arrange(target) %>%
-  mutate(ID = target, color = "3") %>%
-  column_to_rownames('target')
-
-inter <- sort(intersect(rownames(deg),rownames(df)))
-inter
-
-df <- df[inter, ]
-df
-
-df[,c('logfc', 't_value', 'p_value')] <- deg[inter, ]
-
-df <- df %>%
-  mutate(color = if_else(weight > 0 & t_value > 0, '1', color)) %>%
-  mutate(color = if_else(weight > 0 & t_value < 0, '2', color)) %>%
-  mutate(color = if_else(weight < 0 & t_value > 0, '2', color)) %>%
-  mutate(color = if_else(weight < 0 & t_value < 0, '1', color))
-
-pathwayDotplot<- ggplot(df, aes(x = weight, y = t_value, color = color)) + geom_point() +
-  scale_colour_manual(values = c("red","royalblue3","grey")) +
-  geom_label_repel(aes(label = ID)) + 
-  theme_minimal() +
-  theme(legend.position = "none") +
-  geom_vline(xintercept = 0, linetype = 'dotted') +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  ggtitle(tf)
-ggsave(filename = paste0(tf ,"_targets_progeney_VolcanoPlot.pdf"), plot = VolcanoPlot, width = 6, height = 6)
-
-# generate the heatmap for the pathway
-# generate the pheatmap for the top 30 TF
-Pheatmap_pathway <- UrotheliumGeneExpression[inter,] %>% na.omit() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = paste0(tf ,"_targets_progeney_pheatamap.pdf"), plot = Pheatmap_pathway, width = 6, height = 6)
-
-}
-
-```
 
 
