@@ -27,17 +27,9 @@ knitr::opts_chunk$set(echo = TRUE,
 
 ```{r libraries, cache=FALSE, warning=FALSE, error=FALSE, message=FALSE,}
 
-# BiocManager::install("sva")
-# BiocManager::install("bladderbatch")
-
-#BiocManager::install("clusterProfiler")
-#BiocManager::install("org.Mm.eg.db")
-# BiocManager::install("DESeq2")
-#install.packages("statmod")
-#BiocManager::install("edgeR",force = TRUE)
 library(statmod)
 library(sva)
-#library(bladderbatch)
+
 library(ggfortify)
 library(ggplot2)
 library(ggnewscale)
@@ -45,12 +37,11 @@ library(ggrepel)
 library(edgeR)
 library(clusterProfiler)
 library(org.Mm.eg.db)
-#keytypes(org.Mm.eg.db) 
+
 
 library(enrichplot)
 library(tidyverse)
-### here is to get the annotation of ensemble ID
-#BiocManager::install("biomaRt")
+
 library('biomaRt')
 library(factoextra)
 library(DESeq2)
@@ -58,12 +49,7 @@ library(gridExtra)
 library(edgeR)
 
 library(pheatmap)
-#omnipath_cache_wipe()
-#remotes::install_github('saezlab/omnipathr',force = TRUE)
-#remotes::install_github('saezlab/decoupleR')
-#BiocManager::install("saezlab/decoupleR")
-#library(OmnipathR)
-#omnipath_cache_wipe()
+
 library(OmnipathR)
 
 library(decoupleR)
@@ -171,11 +157,9 @@ DEGsvsBaseline[["Upk1bBaseline"]] <- Upk1bBaselineDEGs$Row.names
 ```{r}
  UpGOCondtionPlot <- compareCluster(geneClusters = UpregulatedGenevsBaseline, fun = "enrichGO", OrgDb = "org.Mm.eg.db",ont="BP",keyType = 'SYMBOL', pvalueCutoff=1)
  
-?compareCluster
-
  write.csv(UpGOCondtionPlot, file= "UpGOCondtionPlot.csv")
 
-# generate the top  
+# generate the top 20 pathway dotplot
 pdf(file="UpGOCondtionPlot_top20.pdf", width=14, height=40)
   
   UpGOCondtionPlot_topDotPlot<- dotplot(UpGOCondtionPlot,showCategory = 20, font.size = 12,label_format = 80)
@@ -183,8 +167,9 @@ pdf(file="UpGOCondtionPlot_top20.pdf", width=14, height=40)
   dev.off()
   
   
-  # select the pathway
-  
+
+# select the pathway that we are interested in and generate the dotplot for these pathways
+# Innate immune response: 
 InnativePathway<- c(
 "activation of innate immune response", "neutrophil activation", "neutrophil migration","neutrophil degranulation","cytosolic pattern recognition receptor signaling pathway","granulocyte chemotaxis", "type II interferon production", "tumor necrosis factor production", "I-kappaB kinase/NF-kappaB signaling", "phagocytosis","phagocytosis, engulfment", "regulation of inflammatory response", "integrin-mediated signaling pathway", "interleukin-2 production", "interleukin-1 production" ,"type I interferon production","cell surface toll-like receptor signaling pathway","toll-like receptor signaling pathway","stimulatory C-type lectin receptor signaling pathway","chemokine-mediated signaling pathway","cytokine-mediated signaling pathway","defense response to bacterium"
 )
@@ -217,6 +202,7 @@ RegulationExpMatrixHeatmap
 
 ggsave(filename = "InnativeImmuneRespone_Gene.pdf", plot = RegulationExpMatrixHeatmap, height = 7, width = 5)
 
+# Adaptive immune response
 AdaptivePathway<- c(
 "regulation of adaptive immune response", "antigen receptor-mediated signaling pathway", "T cell differentiation", "T cell proliferation", "T-helper 1 type immune response", "B cell activation", "T cell activation involved in immune response", "defense response to bacterium", "T-helper 17 cell differentiation", "natural killer cell activation"
 )
@@ -236,8 +222,6 @@ ggsave(
   height = 8,
   width = 8
 )
-
-
 
 
 ```
@@ -542,8 +526,6 @@ TFUpk1bInfection <- paste0(TFDir, "/","Upk1binfection/")
 dir.create(TFUpk1bInfection)
 setwd(TFUpk1bInfection)
 
-# the genesets
-Upk1bInfectDEGs
 # 
 # the expression between FVB infection and FVB
 mydataR %>% head()
@@ -786,7 +768,6 @@ ggsave(filename = "Upk1bBaselineDEGTFRankingSoreFigure.pdf",plot =Upk1bBaselineD
 
 ```{r}
 # create dir
-
 UpkinfectvsWTinfect <- paste0(TFDir, "/","UpkinfectvsWTinfect/")
 dir.create(UpkinfectvsWTinfect)
 setwd(UpkinfectvsWTinfect)
@@ -822,479 +803,6 @@ UpkinfectvsWTinfectDEGsets <- UpkinfectvsWTinfectDEGs %>% mutate(t = -log10(PVal
 # check the DEG and t-value per genes
 UpkinfectvsWTinfectDEGsets%>% head()
 ```
-
-
-# we ignore this due to we are not focusing on the whole gene expression but interested into the differentially expression
-```{r}
-# Activity inference wiht univariate linear model: To infer TF enrichment scores we run the univaribate linera model methods, for each sample in our datasets and each TF in our network, it fits a linear model that preducts the observed gene expression based solely on the TF's TF-gene interaction weights. 
-# Once fitted the obtained t-value of the slope ist he score, If it is positive, we interpret that the TF is active and if it is negative we interpret that it is inactive.
-UpkinfectvsWTinfectDEGsample_acts <- run_ulm(mat=UpkinfectvsWTinfectDEGsets, net=net, .source='source', .target='target',
-                  .mor='mor', minsize = 5)
-UpkinfectvsWTinfectDEGsample_acts
-#From the obtained results we will observe the most variable activities across samples in a heat-map:
-#n_tfs <-40
-# vsualization
-# From the obtained results we will observe the most variable activities across samples in a heat-map:
-
-UpkinfectvsWTinfectDEGsample_acts_mat <- UpkinfectvsWTinfectDEGsample_acts %>%
-  pivot_wider(id_cols = 'condition', names_from = 'source',
-              values_from = 'score') %>%
-  column_to_rownames('condition') %>%
-  as.matrix()
-UpkinfectvsWTinfectDEGsample_acts_mat %>% head()
-# Scale per feature
-# Get all the tfs with more variable means across clusters
-UpkinfectvsWTinfectDEGtfs <- UpkinfectvsWTinfectDEGsample_acts %>%
-  group_by(source) %>%
-  summarise(std = sd(score)) %>%
-  arrange(-abs(std)) %>%
-  #head(n_tfs) %>%
-  pull(source)
-
-write.csv(file = "UpkinfectvsWTinfectDEGsets.Trancriptfactor.SampleDetails.csv", UpkinfectvsWTinfectDEGsample_acts)
-
-
-UpkinfectvsWTinfectDEGtfs %>% length()
-# overlapping with DEGs
-UpkinfectvsWTinfectDEGDEGs<- UpkinfectvsWTinfectDEGs$Row.names
-UpkinfectvsWTinfectDEGDEGs %>% length()
-
-UpkinfectvsWTinfectDEGtfs_DEG_verlapping<-intersect(UpkinfectvsWTinfectDEGtfs, UpkinfectvsWTinfectDEGDEGs)
-UpkinfectvsWTinfectDEGtfs_DEG_verlapping
-
-# Choose color palette
-palette_length = 100
-my_color = colorRampPalette(c("Darkblue", "white","red"))(palette_length)
-# Generate the expression profiles of these overlapping genes
-UpkinfectvsWTinfectDEGtfs_DEG_verlappingHeatmap<- UpkinfectvsWTinfectExpression[UpkinfectvsWTinfectDEGtfs_DEG_verlapping,] %>% pheatmap(scale = "row",border_color = NA, color=my_color,angle_col = "45") 
-# top transcript that show dramatical different
-ggsave("UpkinfectvsWTinfectDEGsets.tfs_DEG_verlappingHeatmap_Exp.pdf", plot =UpkinfectvsWTinfectDEGtfs_DEG_verlappingHeatmap, height = 10, width = 6 )
-
-UpkinfectvsWTinfectDEGsample_acts_mat_overlaping<- UpkinfectvsWTinfectDEGsample_acts_mat[,colnames(UpkinfectvsWTinfectDEGsample_acts_mat) %in% UpkinfectvsWTinfectDEGtfs_DEG_verlapping]
-
-UpkinfectvsWTinfectDEGsample_acts_mat_overlaping
-t(UpkinfectvsWTinfectDEGsample_acts_mat_overlaping)
-#sample_acts_mat <- scale(sample_acts_mat)
-
-
-my_breaks <- c(seq(-3, 0, length.out=ceiling(palette_length/2) + 1),
-               seq(0.05, 3, length.out=floor(palette_length/2)))
-
-my_breaks
-# Plot
-UpkinfectvsWTinfectDEGTopTFpheatmap<-pheatmap(na.omit(t(UpkinfectvsWTinfectDEGsample_acts_mat)), scale = "row",border_color = NA, color=my_color, breaks = my_breaks) 
-t(sample_acts_mat) %>% head()
-
-ggsave("UpkinfectvsWTinfectDEGsets.TopTFpheatmap_FromAllExp.pdf", plot =UpkinfectvsWTinfectDEGTopTFpheatmap, height = 10, width = 6 )
-
-# show the score of 
-n_tfs=40
-# Filter top TFs in both signs
-UpkinfectvsWTinfectDEGf_contrast_acts <- UpkinfectvsWTinfectDEGsample_acts %>%
-  mutate(rnk = NA)
-msk <- UpkinfectvsWTinfectDEGf_contrast_acts$score > 0
-UpkinfectvsWTinfectDEGf_contrast_acts[msk, 'rnk'] <- rank(-UpkinfectvsWTinfectDEGf_contrast_acts[msk, 'score'])
-UpkinfectvsWTinfectDEGf_contrast_acts[!msk, 'rnk'] <- rank(-abs(UpkinfectvsWTinfectDEGf_contrast_acts[!msk, 'score']))
-UpkinfectvsWTinfectDEGtfs <- UpkinfectvsWTinfectDEGf_contrast_acts %>%
-  arrange(rnk) %>%
-  head(n_tfs) %>%
-  pull(source)
-UpkinfectvsWTinfectDEGf_contrast_acts <- UpkinfectvsWTinfectDEGf_contrast_acts %>%
-  filter(source %in% UpkinfectvsWTinfectDEGtfs)
-
-# Plot
-UpkinfectvsWTinfectDEGTFRankingSoreFigure<-ggplot(UpkinfectvsWTinfectDEGf_contrast_acts, aes(x = reorder(source, score), y = score)) + 
-    geom_bar(aes(fill = score), stat = "identity") +
-    scale_fill_gradient2(low = "darkblue", high = "indianred", 
-        mid = "whitesmoke", midpoint = 0) + 
-    theme_minimal() +
-    theme(axis.title = element_text(face = "bold", size = 12),
-        axis.text.x = 
-            element_text(angle = 45, hjust = 1, size =10, face= "bold"),
-        axis.text.y = element_text(size =10, face= "bold"),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-    xlab("TFs")
-
-ggsave(filename = "UpkinfectvsWTinfectDEGTFRankingSoreFigure.pdf",plot =UpkinfectvsWTinfectDEGTFRankingSoreFigure, height = 6, width = 9 )
-
-```
-
-# we are interested in the list of NFkB target genes that contribute to the RelA/p65 score for the 24 hpi WT vs Upk1b KO comparison
-```{r}
-UpkinfectvsWTinfectDEGsample_acts %>% head()
-
-# identify the NFKb target genes:
-
-NfkbTargets<- net %>% filter(source == "Nfkb1")
-length(NfkbTargets$target)
-
-# check the candiate overlapping with OverlappingNfkbTargetsDEG
-
-RelaSource <- net %>% filter(target== "Rela")
-RelaSource
-length(RelaSource$source)
-NfkbTargetRelaSource<- RelaSource %>% filter(source %in% NfkbTargets$target)
-
-length(NfkbTargetRelaSource$source)
-
-NfkbTargetRelaSource %>% head()
-UpkinfectvsWTinfectExpression %>% head()
-NfkbTargetRelaSourceExpression<-na.omit(UpkinfectvsWTinfectExpression[NfkbTargetRelaSource$source,]) 
-FinalNfkbTargetRelaSourceExpression<-NfkbTargetRelaSourceExpression[!rownames(NfkbTargetRelaSourceExpression) %in% c("Rela"),]
-NfkbTargetRelaSourceHeatmap<- FinalNfkbTargetRelaSourceExpression %>% filter() %>% pheatmap(scale = "row",border_color = NA,cluster_cols = F, color=my_color,angle_col = "45",treeheight_row=0) 
-
-ggsave("NfkbTargetRelaSourceHeatmap.pdf",NfkbTargetRelaSourceHeatmap, height = 4, width = 4)
-
-NfkbTargetRelaSource %>% head()
-# check their overlapping with the DEGs
-OverlappingNfkbTargetsRelaSourceDEG<- NfkbTargetRelaSource %>% filter(source %in% UpkinfectvsWTinfectDEGs$Row.names)
-OverlappingNfkbTargetsRelaSourceDEG
-#UpkinfectvsWTinfectDEGs %>% filter(UpkinfectvsWTinfectDEGs$Row.names %in% NfkbTargetRelaSource$source)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# we profiled the expression of target gene list
-```{r}
-net %>%
-  filter(source == tf)
-for (tf in tfs_DEG_verlapping){
-  
-  tf= c("Jun")
-  net %>% head()
-  df<- c()
-  df <- net %>%
-  filter(source == tf) %>%
-  arrange(target) %>%
-  mutate(ID = target, color = "3") %>%
-  column_to_rownames('target')
-
-inter <- sort(intersect(rownames(deg),rownames(df)))
-inter
-#heightlength <- round(6*length(inter))
-
-df[inter,c('logfc', 't_value', 'Padjust')] <- deg[inter, ]
-df <- df %>%
-  mutate(color = if_else(mor > 0 & t_value > 0, '1', color)) %>%
-  mutate(color = if_else(mor > 0 & t_value < 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value > 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value < 0, '1', color))
-
-VolcanoPlot <- ggplot(df, aes(x = logfc, y = -log10(Padjust), color = color, size=abs(mor))) +
-  geom_point() +
-  scale_colour_manual(values = c("red","royalblue3","grey")) +
-  geom_label_repel(aes(label = ID, size=1)) + 
-  theme_minimal() +
-  theme(legend.position = "none") +
-  geom_vline(xintercept = 0, linetype = 'dotted') +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  ggtitle(tf)
-#VolcanoPlot
-ggsave(filename = paste0(tf ,"_targets_VolcanoPlot.pdf"), plot = VolcanoPlot, width = 6, height = 6)
-# add a heatmap for the Rela infected genes (Regulated by Transcritptomics)
-inter <- sort(intersect(rownames(deg),rownames(df)))
-Pheatmap_Targets<- UrotheliumGeneExpression[inter,] %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = paste0(tf ,"_targets_peahtamap.pdf"), plot = Pheatmap_Targets, width = 6, height = 6)
-
-
-}
-
-```
-
-
-# we infer pathway activatity from the the t-value of the DEGs between KO and WT
-```{r}
-# Run ulm
-n_tfs <-40
-
-# Run Univariate linear model (ULM) for the differentially expressed genes
-contrast_acts <- run_ulm(mat=deg[, 't', drop=FALSE], net=net, .source='source', .target='target',
-                  .mor='mor', minsize = 5)
-
-contrast_acts
-# Filter top TFs in both signs
-## add a NA for a new column rnk
-f_contrast_acts <- contrast_acts %>%
-  mutate(rnk = NA)
-msk <- f_contrast_acts$score >0
-
-# we only consider those that have scores larger than 0
-
-f_contrast_acts[msk, 'rnk'] <- rank(-f_contrast_acts[msk, 'score'])
-f_contrast_acts[!msk, 'rnk'] <- rank(-abs(f_contrast_acts[!msk, 'score']))
-tfs_Ranked <- f_contrast_acts %>%
-  arrange(rnk)
-
-tfs_Ranked
-write.csv(tfs_Ranked, "UrotheliumNeonateDEGallTrasncriptFactor.csv")
-
-# only show top TFs
-tfs <- f_contrast_acts %>%
-  arrange(rnk) %>%
-  head(n_tfs) %>%
-  pull(source)
-
-tfs
-f_contrast_acts <- f_contrast_acts %>%
-  filter(source %in% tfs)
-
-# generate the top transcript factor for the DEGs
-
-# Plot
-DEGTopTrasncriptFactor<- ggplot(f_contrast_acts, aes(x = reorder(source, score), y = score)) + 
-    geom_bar(aes(fill = score), stat = "identity") +
-    scale_fill_gradient2(low = "darkblue", high = "indianred", 
-        mid = "whitesmoke", midpoint = 0) + 
-    theme_minimal() +
-    theme(axis.title = element_text(face = "bold", size = 12),
-        axis.text.x = 
-            element_text(angle = 45, hjust = 1, size =10, face= "bold"),
-        axis.text.y = element_text(size =10, face= "bold"),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-    xlab("Pathways")
-
-ggsave("UrotheliumNeonateDEGTopTrasncriptFactor.pdf",plot = DEGTopTrasncriptFactor, height = 4, width = 8)
-
-
-
-```
-
-```{r}
-tfs
-UrotheliumGeneExpression["Trp53",]
-# generate the pheatmap for the top 30 TF
-Pheatmap_TF <- UrotheliumGeneExpression[tfs,] %>% na.omit() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = "Kidney_TF_peahtamap.pdf", plot = Pheatmap_TF, width = 6, height = 6)
-
-
-```
-
-# show one specific activated pathway
-```{r}
-tf <- 'Rela'
-# here we generate all the TF
-tfs <- f_contrast_acts %>%
-  arrange(rnk) %>%
-  #head(n_tfs) %>%
-  pull(source)
-tfs
-# generate the pheatmap for the targets for each TF
-
-for (tf in tfs){
-  
-  net %>% head()
-  df<- c()
-  df <- net %>%
-  filter(source == tf) %>%
-  arrange(target) %>%
-  mutate(ID = target, color = "3") %>%
-  column_to_rownames('target')
-
-inter <- sort(intersect(rownames(deg),rownames(df)))
-
-#heightlength <- round(6*length(inter))
-
-df[inter,c('logfc', 't_value', 'Padjust')] <- deg[inter, ]
-df <- df %>%
-  mutate(color = if_else(mor > 0 & t_value > 0, '1', color)) %>%
-  mutate(color = if_else(mor > 0 & t_value < 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value > 0, '2', color)) %>%
-  mutate(color = if_else(mor < 0 & t_value < 0, '1', color))
-
-VolcanoPlot <- ggplot(df, aes(x = logfc, y = -log10(Padjust), color = color, size=abs(mor))) +
-  geom_point() +
-  scale_colour_manual(values = c("red","royalblue3","grey")) +
-  geom_label_repel(aes(label = ID, size=1)) + 
-  theme_minimal() +
-  theme(legend.position = "none") +
-  geom_vline(xintercept = 0, linetype = 'dotted') +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  ggtitle(tf)
-
-ggsave(filename = paste0(tf ,"_targets_VolcanoPlot.pdf"), plot = VolcanoPlot, width = 6, height = 6)
-# add a heatmap for the Rela infected genes (Regulated by Transcritptomics)
-inter <- sort(intersect(rownames(deg),rownames(df)))
-Pheatmap_Targets<- UrotheliumGeneExpression[inter,] %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = paste0(tf ,"_targets_peahtamap.pdf"), plot = Pheatmap_Targets, width = 6, height = 6)
-
-
-}
-
-# generate the pheatmap for the top 30 TF
-Pheatmap_TF <- UrotheliumGeneExpression[tfs,] %>% na.omit() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = "UrotheliumGeneExpression_TF_peahtamap.pdf", plot = Pheatmap_TF, width = 6, height = 6)
-
-```
-
-
-# For visuziation of the major signaling pathway
-```{r}
-
-# setting the progeny signaling pathway
-setwd(ProgenyDir)
-
-netProgeny <- get_progeny(organism = 'mouse', top = 500)
-netProgeny
-
-```
-
-# loading the datasets and generate the counts for each condition
-```{r}
-# we already got the expression
-
-UrotheliumGeneExpression %>% head()
-# we already get the design 
-
-UrotheliumDesign <- tibble(sample=str_replace_all(colnames(UrotheliumGeneExpression),rep_str), condition=c(rep("Adult",3),rep("Neonate",4)))
-UrotheliumDesign
-
-# we used the limma of which are intested in extracted the obtained t-value from the contrast
-deg %>% head()
-
-Deg_progeny <- deg[,2] %>% as.matrix() 
-colnames(Deg_progeny) ="t"
-Deg_progeny %>% head()
-```
-
-# Activity inference with Multivariate Linear Model (MLM)
-
-```{r}
-# Run mlm
-deg
-contrast_acts_Pregeny <- run_mlm(mat=Deg_progeny, net=netProgeny, .source='source', .target='target',
-                  .mor='weight', minsize = 5)
-print(contrast_acts_Pregeny)
-# Plot
-ggplot(contrast_acts_Pregeny, aes(x = reorder(source, score), y = score)) + 
-    geom_bar(aes(fill = score), stat = "identity") +
-    scale_fill_gradient2(low = "darkblue", high = "indianred", 
-        mid = "whitesmoke", midpoint = 0) + 
-    theme_minimal() +
-    theme(axis.title = element_text(face = "bold", size = 12),
-        axis.text.x = 
-            element_text(angle = 45, hjust = 1, size =10, face= "bold"),
-        axis.text.y = element_text(size =10, face= "bold"),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-    xlab("Pathways")
-```
-# visulaization From the obtained results we will observe the obtained activities per sample in a heat-map:
-```{r}
-# Run mlm
-UrotheliumGeneExpression
-sample_acts <- run_mlm(mat=UrotheliumGeneExpression, net=netProgeny, .source='source', .target='target',
-                  .mor='weight', minsize = 5)
-sample_acts
-# Transform to wide matrix
-sample_acts_mat <- sample_acts %>%
-  pivot_wider(id_cols = 'condition', names_from = 'source',
-              values_from = 'score') %>%
-  column_to_rownames('condition') %>%
-  as.matrix()
-sample_acts_mat
-# Scale per feature
-sample_acts_mat <- scale(sample_acts_mat)
-
-# Choose color palette
-palette_length = 100
-my_color = colorRampPalette(c("Darkblue", "white","red"))(palette_length)
-
-my_breaks <- c(seq(-3, 0, length.out=ceiling(palette_length/2) + 1),
-               seq(0.05, 3, length.out=floor(palette_length/2)))
-
-# Plot
-
-pheatmap(sample_acts_mat, border_color = NA, color=my_color, breaks = my_breaks) 
-```
-
-
-# get all the heatmap figures for the important signaling
-```{r}
-
-# generate the pathway and targets
-pathways <- contrast_acts_Pregeny %>% pull(source) %>% unique()
-for (tf in pathways){
-
-
-df <- netProgeny %>%
-  filter(source == tf) %>%
-  arrange(target) %>%
-  mutate(ID = target, color = "3") %>%
-  column_to_rownames('target')
-
-inter <- sort(intersect(rownames(deg),rownames(df)))
-inter
-
-df <- df[inter, ]
-df
-
-df[,c('logfc', 't_value', 'p_value')] <- deg[inter, ]
-
-df <- df %>%
-  mutate(color = if_else(weight > 0 & t_value > 0, '1', color)) %>%
-  mutate(color = if_else(weight > 0 & t_value < 0, '2', color)) %>%
-  mutate(color = if_else(weight < 0 & t_value > 0, '2', color)) %>%
-  mutate(color = if_else(weight < 0 & t_value < 0, '1', color))
-
-pathwayDotplot<- ggplot(df, aes(x = weight, y = t_value, color = color)) + geom_point() +
-  scale_colour_manual(values = c("red","royalblue3","grey")) +
-  geom_label_repel(aes(label = ID)) + 
-  theme_minimal() +
-  theme(legend.position = "none") +
-  geom_vline(xintercept = 0, linetype = 'dotted') +
-  geom_hline(yintercept = 0, linetype = 'dotted') +
-  ggtitle(tf)
-ggsave(filename = paste0(tf ,"_targets_progeney_VolcanoPlot.pdf"), plot = pathwayDotplot, width = 6, height = 6)
-
-# generate the heatmap for the pathway
-# generate the pheatmap for the top 30 TF
-Pheatmap_pathway <- UrotheliumGeneExpression[inter,] %>% na.omit() %>% pheatmap(cluster_cols = F,show_rownames = T,scale= "row",angle_col = "45")
-ggsave(filename = paste0(tf ,"_targets_progeney_pheatamap.pdf"), plot = Pheatmap_pathway, width = 6, height = 6)
-
-}
-
-```
-
-
-
-
-
-
-
-
 
 
 
@@ -1499,254 +1007,6 @@ DevelopmentGenemarkersExpMatrixHeatmap <-  pheatmap(DevelopmentGenemarkersExpMat
 ggsave(filename = "Upk1b_CombinedSamples_DevelopmentGenemarkersExpMatrixHeatmap.pdf", plot = DevelopmentGenemarkersExpMatrixHeatmap, height = 5, width = 6)
 
 ```
-
-# ####################################################################
-# Section 2: Detections of differentially expressed genes
-# ###################################################################
-
-```{r}
-#### 设计matrix ：
-design <- model.matrix(~0+group_all)
-colnames(design) <-levels(group_all)
-design
-##### 估计离散值 （Dispersion）
-genelist.Disp <- estimateDisp(genelist.norm, design, robust = TRUE)
-
-#plotBCV(genelist.Disp)
-
-fit <- glmQLFit(genelist.Disp, design, robust=TRUE)
-```
-
-# 2.1 generate the DEGs between FVB infection vs FVB baseline
-```{r}
-cntrvsKD <- makeContrasts(UPK1B_Baseline-FVB_Baseline, levels=design)
-res <- glmQLFTest(fit, contrast=cntrvsKD)
-ig.edger <- res$table[p.adjust(res$table$PValue, method = "BH") < 1, ]
-
-### add the Pajust value
-
-res$table$Padjust<-p.adjust(res$table$PValue, method = "BH") 
-
-
-### generate an datafram
-
-results<-as.data.frame(topTags(res, n=Inf))
-
-results %>% head()
-# merge the results with the orginal expression
-
-result_Details <- topTags(res,n=Inf)
-result_Gene_FC<-merge(result_Details$table, Urothelium, by= 'row.names')
-result_Gene_FC_normalizedlog<-merge(result_Details$table, genelist.norm.log, by= 'row.names')
-
-write.csv(result_Gene_FC, file = "Upk1b_UPK1B_BaselinevsFVB_Baseline.withorigin.csv")
-
-write.csv(result_Gene_FC_normalizedlog, file = "Upk1b_UPK1B_BaselinevsFVB_Baseline.withnormalized.csv")
-
-### Adding annotation to the edgeR results
-library(org.Mm.eg.db)
-
-### gene the annotation information of the results
-#ann<- AnnotationDbi::select(org.Mm.eg.db, keys=rownames(results), columns=c("ENSEMBL","SYMBOL","GENENAME"), keytype="ENSEMBL")
-
-#ann <- select(org.Mm.eg.db, keys=rownames(res$table),columns=c("ENSEMBL","SYMBOL","GENENAME"),keytype = "ENSEMBL")
-### then combine with sample expression
-### generated the sample expression
-Expression<-as.data.frame(res$fitted.values)
-
-#Expression$name<-row.names(Expression)
-results<-merge(results, Urothelium, by='row.names')
-### print the comparision across all the samples
-write.csv(results, file="Upk1b_UrotheliumExpression.AllGenes.csv")
-
-### detect Differentially expressed genes
-# up-regulated genes
-BUDEG_Padjust<- res$table[res$table$Padjust <=0.05 & res$table$logFC >=0.58,]
-# down-regulated genes
-BDDEG_Padjust<- res$table[res$table$Padjust <=0.05 & res$table$logFC <= -0.58,]
-
-### if we use the pvalue instead of p adjust value, we did not use P value
-# BUDEG<- res$table[res$table$PValue <= 0.05 &  res$table$logFC >=0.58, ]
-# BDDEG<- res$table[res$table$PValue <= 0.05  &  res$table$logFC <=-0.58, ]
-
-nrow(BUDEG_Padjust)
-nrow(BDDEG_Padjust)
-## add the fold change for each gene
-
-FCgenelist<-res$table$logFC
-
-names(FCgenelist) <-as.character(row.names(res$table))
-
-# sorting the FCgene list
-FCgenelist <- sort(FCgenelist, decreasing = T)
-
-# merge the upregulated genes and downregulated genes
-UrotheliumExpression.UpGenes<- merge(BUDEG_Padjust, Urothelium, by= 'row.names')
-UrotheliumExpression.DownGenes<- merge(BDDEG_Padjust, Urothelium, by= 'row.names')
-
-write.csv(UrotheliumExpression.UpGenes,file="Upk1b_UPK1B_BaselinevsFVB_Baseline_UpRegulatedGenes.csv")
-write.csv(UrotheliumExpression.DownGenes,file="Upk1b_UPK1B_BaselinevsFVB_Baseline_DownRegulatedGenes.csv")
-
-BDEG<-rbind(UrotheliumExpression.UpGenes,UrotheliumExpression.DownGenes)
-nrow(BDEG)
-
-write.csv(BDEG,file="Upk1b_UPK1B_BaselinevsFVB_Baseline.DifferentialRegulatedGenes_Pvalue.csv")
-
-###  annotate the ensemble different expression with the gene ID
-
-### draw a viocano plot to show differentially expressed genes
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_viocanoPlot.pdf", width = 6, height = 6)
-
-Upk1b_UPK1B_BaselinevsFVB_Baseline_viocano<- ggplot(results,aes(x= results$logFC,y=-log10(results$Padjust)))+
-  geom_point(size=1,color= ifelse(results$Padjust<=0.05 & results$logFC>=0.58,"red",
-                                    ifelse(results$Padjust<=0.05 & results$logFC<=-0.58,"blue","gray")))+ 
-  geom_text_repel(aes(label=ifelse(results$Padjust<=0.001 &(results$logFC >=2 |results$logFC <=-2) ,as.character(results$Row.names),'')),segment.size=0.01,
-                  hjust=0.2, size=3)+
-  
-  theme_bw()+
-  theme(plot.background = element_blank(),
-        text = element_text(size=16),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank()) +ylim(0,10) + scale_x_continuous(limits=c(-10,10), breaks = c(-10, -5, 0, 5, 10))+
-  xlab("log Fold Change") +ylab("-log10 adjusted P value")
-
-
-grid.arrange(Upk1b_UPK1B_BaselinevsFVB_Baseline_viocano)
-dev.off()
-results %>% arrange(Padjust,logFC) %>% head()
-```
-
-```{r}
-# draw heatmap for the DEGs between FVB 24hpi and baseline
-result_Gene_FC_normalizedlog$Row.names
-
-result_Gene_FC_normalizedlog  %>% head()
-DEGExpMatrix <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% BDEG$Row.names, c(8:11,16:19)]
-rownames(DEGExpMatrix) <- result_Gene_FC_normalizedlog[result_Gene_FC_normalizedlog$Row.names %in% BDEG$Row.names, 1]
-#colnames(DEGExpMatrix) <- str_replace_all(colnames(DEGExpMatrix), rep_str)
-
-DEGExpMatrixHeatmap <- DEGExpMatrix %>% as.matrix() %>% pheatmap(cluster_cols = F,show_rownames = F,scale= "row",angle_col = "45")
-ggsave(filename = "Upk1b_UPK1B_BaselinevsFVB_Baseline_DEGExpMatrixHeatmap.pdf", plot = DEGExpMatrixHeatmap, height = 5, width = 6)
-
-?grid.arrange
-```
-
-
-# ####################################################################
-# Section 3: functional enrichments of the DEGs
-# ###################################################################
-```{r}
-
-# set the directory into GOenrich
-
-setwd(GOenrichDir)
-
-BDEG %>% head()
-### check the enrichment of Up-regulated genes for Btret
-
-# Here we kept all the GO enrichment values
-BgoUp<-enrichGO(row.names(BUDEG_Padjust), OrgDb = "org.Mm.eg.db", ont='BP',pAdjustMethod = 'BH',pvalueCutoff = 0.05, qvalueCutoff = 0.05,keyType = 'SYMBOL')
-BgoDown<-enrichGO(row.names(BDDEG_Padjust), OrgDb = "org.Mm.eg.db", ont='BP',pAdjustMethod = 'BH',pvalueCutoff = 0.05, qvalueCutoff = 0.05,keyType = 'SYMBOL')
-### perform the DEGs Go enrichment
-BDEGsGO<-enrichGO(BDEG$Row.names, OrgDb = "org.Mm.eg.db", ont='BP',pAdjustMethod = 'BH',pvalueCutoff = 1, qvalueCutoff = 1,keyType = 'SYMBOL')
-
-write.csv(BgoUp, file="Upk1b_UPK1B_BaselinevsFVB_Baseline.UpRegulatedGenes.GOenrich.csv")
-write.csv(BgoDown, file="Upk1b_UPK1B_BaselinevsFVB_Baseline.DownRegulatedGenes.GOenrich.csv")
-
-BgoUpSimplified<-clusterProfiler::simplify(BgoUp)
-BgoDownSimplified<-clusterProfiler::simplify(BgoDown)
-
-write.csv(BgoUpSimplified, file="Upk1b_UPK1B_BaselinevsFVB_Baseline.UpRegulatedGenes.GOenrichSimplified.csv")
-write.csv(BgoDownSimplified, file="Upk1b_UPK1B_BaselinevsFVB_Baseline.DownRegulatedGenes.GOenrichSimplified.csv")
-
-```
-
-# generate the figures used the simplifed GO terms
-
-```{r}
-##### generated the upregulated/downregulated GO term figures.
-# for Upregulated genes
-#https://bioconductor.statistik.tu-dortmund.de/packages/3.8/bioc/vignettes/ReactomePA/inst/doc/ReactomePA.html
-head(as.data.frame(BgoUpSimplified))
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_UpRegulatedGenes_barploteGOSimplified.pdf", width = 10, height = 8)
-barplot(BgoUpSimplified, showCategory = 20,font.size = 12,label_format = 80)
-dev.off()
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_UpRegulatedGenes_DotplotGOSimplified.pdf", width = 10, height = 8)
-dotplot(BgoUpSimplified,showCategory=20,font.size = 12,label_format = 80)
-dev.off()
-
-d <- GOSemSim::godata("org.Hs.eg.db", ont = "BP")   
-compare_cluster_GO_emap_1 <- enrichplot::pairwise_termsim(BgoUpSimplified, semData = d,  method="Wang")
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_UpnRegulatedGenes_emapplotSimplified.pdf", width = 16, height = 12)
-emapplot(compare_cluster_GO_emap_1)
-dev.off()
-
-
-head(as.data.frame(BgoDownSimplified))
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_DownRegulatedGenes_barploteGOSimplified.pdf", width = 10, height = 8)
-barplot(BgoDownSimplified, showCategory = 20,font.size = 12,label_format = 80)
-dev.off()
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_DownRegulatedGenes_DotplotGOSimplified.pdf", width = 10, height = 8)
-dotplot(BgoDownSimplified,showCategory=20,font.size = 12,label_format = 80)
-dev.off()
-
-d <- GOSemSim::godata("org.Hs.eg.db", ont = "BP")   
-compare_cluster_GO_emap_2 <- enrichplot::pairwise_termsim(BgoDownSimplified, semData = d,  method="Wang")
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_DownRegulatedGenes_emapplotSimplified.pdf", width = 16, height = 12)
-emapplot(compare_cluster_GO_emap_2)
-dev.off()
-```
-
-
-# The figure is for the GO enrichment without simplified Go terms
-```{r}
-##### generated the upregulated/downregulated GO term figures.
-# for Upregulated genes
-#https://bioconductor.statistik.tu-dortmund.de/packages/3.8/bioc/vignettes/ReactomePA/inst/doc/ReactomePA.html
-head(as.data.frame(BgoUp))
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_UpRegulatedGenes_barploteGO.pdf", width = 10, height = 8)
-barplot(BgoUp, showCategory = 20,font.size = 12,label_format = 80)
-dev.off()
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_UpRegulatedGenes_DotplotGO.pdf", width = 10, height = 8)
-dotplot(BgoUp,showCategory=20,font.size = 12,label_format = 80)
-dev.off()
-
-d <- GOSemSim::godata("org.Hs.eg.db", ont = "BP")   
-compare_cluster_GO_emap_3 <- enrichplot::pairwise_termsim(BgoUp, semData = d,  method="Wang")
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_UpnRegulatedGenes_emapplot.pdf", width = 16, height = 12)
-emapplot(compare_cluster_GO_emap_3)
-dev.off()
-
-
-head(as.data.frame(BgoDown))
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_DownRegulatedGenes_barploteGO.pdf", width = 10, height = 8)
-barplot(BgoDown, showCategory = 20,font.size = 12,label_format = 80)
-dev.off()
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_DownRegulatedGenes_DotplotGO.pdf", width = 10, height = 8)
-dotplot(BgoDown,showCategory=20,font.size = 12,label_format = 80)
-dev.off()
-
-d <- GOSemSim::godata("org.Hs.eg.db", ont = "BP")   
-compare_cluster_GO_emap_4 <- enrichplot::pairwise_termsim(BgoDown, semData = d,  method="Wang")
-
-pdf("Upk1b_UPK1B_BaselinevsFVB_Baseline_DownRegulatedGenes_emapplot.pdf", width = 16, height = 12)
-emapplot(compare_cluster_GO_emap_4)
-dev.off()
-
-```
-
 
 # ############################################
 # more work are needed to better focus
